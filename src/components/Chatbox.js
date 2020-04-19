@@ -53,7 +53,13 @@ const Chatbox = (props) => {
 		let lastMessages = [];
 		if (!messages.length) {
 			console.log('Fetching messages from DB');
-			fetch(URL)
+			fetch(URL, {
+				method: 'GET',
+				headers: {
+					authorization:
+						'Bearer <REDACTED>',
+				},
+			})
 				.then((response) => response.json())
 				.then((data) => {
 					data.forEach((message) => {
