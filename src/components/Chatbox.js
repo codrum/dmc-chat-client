@@ -1,6 +1,5 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { connect } from 'react-redux';
-import { animateScroll } from 'react-scroll';
 
 import { makeStyles } from '@material-ui/core/styles';
 import { Container } from '@material-ui/core';
@@ -8,7 +7,13 @@ import { Container } from '@material-ui/core';
 import Title from './Title';
 import ChatMessage from './ChatMessage';
 
-import { getMessagesAction } from '../containers/ChatContainer/actions';
+import {
+	getMessagesAction,
+	getMessageColorAction,
+	getNameAction,
+	getNameColorAction,
+} from '../containers/ChatContainer/actions';
+import { getMessageColor, getNameColor } from '../parsers/getChatColor';
 
 const useStyles = makeStyles((theme) => ({
 	root: { marginTop: '10vh' },
@@ -44,36 +49,44 @@ const useStyles = makeStyles((theme) => ({
 
 const Chatbox = (props) => {
 	const classes = useStyles();
-	const { messages } = props;
+	const { messages, messageColor, names, nameColor } = props;
+
+	const messagesEndRef = useRef(null);
+
+	const scrollToBottom = () => {
+		messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+	};
 
 	// const msgs = messages;
 	const URL = 'https://dmcchat.com:9000/api/getLast15Messages';
 
 	useEffect(() => {
+		scrollToBottom();
 		let lastMessages = [];
 		if (!messages.length) {
 			console.log('Fetching messages from DB');
 			fetch(URL, {
 				method: 'GET',
-				headers: {
-					authorization:
-						'Bearer <REDACTED>',
-				},
+				// headers: {
+				// 	authorization:
+				// 		'Bearer <REDACTED>',
+				// },
 			})
 				.then((response) => response.json())
 				.then((data) => {
-					data.forEach((message) => {
-						props.getMessages(message.message);
+					data.forEach((doc) => {
+						props.getName(doc.name);
+						props.getMessages(doc.message);
+						props.getMsgColor(getMessageColor(doc));
+						props.getNameColor(getNameColor(doc));
 					});
 				})
 
 				.catch((err) => console.log(err));
+
+			// get chat colors
 		}
 	}, [messages]);
-
-	const scrollToBottom = () => {
-		animateScroll.scrollToBottom();
-	};
 
 	return (
 		<div className={classes.root}>
@@ -81,22 +94,35 @@ const Chatbox = (props) => {
 			<Container spacing={8} className={classes.container}>
 				{messages.length ? (
 					messages.map((message, index) => (
-						<ChatMessage key={index} message={message} />
+						<ChatMessage
+							// color={messageColor[index]}
+							messageColor={messageColor[index]}
+							nameColor={nameColor[index]}
+							key={index}
+							name={names[index]}
+							message={message}
+						/>
 					))
 				) : (
-					<ChatMessage message={'No messages yet...'} />
+					<ChatMessage color='#ffffff' message={'No messages yet...'} />
 				)}
-				{scrollToBottom()}
+				<div ref={messagesEndRef} />
 			</Container>
 		</div>
 	);
 };
 
-const mapStateToProps = ({ messages }) => ({
+const mapStateToProps = ({ messages, messageColor, names, nameColor }) => ({
 	messages,
+	messageColor,
+	names,
+	nameColor,
 });
 const mapDispatchToProps = (dispatch) => ({
 	getMessages: (message) => dispatch(getMessagesAction(message)),
+	getName: (name) => dispatch(getNameAction(name)),
+	getMsgColor: (message) => dispatch(getMessageColorAction(message)),
+	getNameColor: (message) => dispatch(getNameColorAction(message)),
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(Chatbox);
