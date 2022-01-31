@@ -2,6 +2,8 @@
 
 This is a React.js project that displays in-game messages from the destroymc.net Minecraft server via websockets.
 
+![Image](https://i.gyazo.com/f9ad434a6b84683ac2eb535e769c33f9.jpg)
+
 ## Install
 
 ```
